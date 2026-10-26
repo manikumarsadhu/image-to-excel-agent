@@ -80,11 +80,14 @@ Tabs: **Upload & process** (local OCR + cloud structuring), **Review & edit**, *
 
 ## Deploy free on Streamlit Community Cloud
 
+**Important:** PaddlePaddle needs **Python 3.11 or 3.12**. Community Cloud may default to **3.14**, which breaks install. You must pick **3.12** (or 3.11) in the deploy UI — `.python-version` alone is **not** enough.
+
 1. Push this repo to GitHub (`.env` must **not** be committed).
-2. Open [share.streamlit.io](https://share.streamlit.io) → **Create app** → pick repo `manikumarsadhu/image-to-excel-agent`.
+2. Open [share.streamlit.io](https://share.streamlit.io) → **Create app** (or delete the app and redeploy to change Python later).
 3. **Main file path:** `src/app.py`
 4. **Branch:** `main`
-5. **App settings → Secrets** — paste (with your real keys):
+5. Click **Advanced settings** → **Python version** → **3.12** (or 3.11) → **Save**.
+6. **Secrets** (same Advanced settings or app Settings) — paste (with your real keys):
 
 ```toml
 GEMINI_API_KEY = "your-gemini-key"
@@ -98,7 +101,9 @@ See [.streamlit/secrets.toml.example](.streamlit/secrets.toml.example). Cloud in
 
 6. **Deploy.** First OCR run downloads Paddle models (can take several minutes). Free tier RAM is limited — if the app crashes on upload, use an [Oracle Always Free VM](https://www.oracle.com/cloud/free/) instead.
 
-**Repo files used by Cloud:** `requirements.txt` (includes `-e .` and `paddlepaddle==2.6.2`), `.python-version` (`3.11`), `packages.txt` (system libs for OCR).
+**Repo files used by Cloud:** `requirements.txt` (includes `-e .` and `paddlepaddle==2.6.2`), `environment.yml` (conda Python 3.12 if Cloud uses it), `packages.txt` (system libs for OCR, no `#` comments).
+
+If install still fails with `cp314` or `No matching distribution found for paddlepaddle`, the app is on Python 3.14 — **delete the app**, redeploy, and set **Python 3.12** in Advanced settings.
 
 ## Layout (Stage 5)
 
