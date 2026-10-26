@@ -20,6 +20,7 @@ from models.document import (
     SourceDocument,
 )
 from models.pharmacy import PharmacyLineItem
+from utils.schema_dynamic import is_exportable_field_key
 
 META_COLUMNS: tuple[str, ...] = (
     "document_id",
@@ -84,18 +85,28 @@ class ExcelExportResult:
     line_items_sheet_name: str | None = None
 
 
+def _unique_header(base: str, key: str, seen: set[str]) -> str:
+    header = base.strip() or key
+    if header not in seen:
+        seen.add(header)
+        return header
+    fallback = f"{header} [{key}]"
+    if fallback in seen:
+        raise ExcelExportError(f"Duplicate Excel column name: {fallback}")
+    seen.add(fallback)
+    return fallback
+
+
 def build_column_headers(schema: ExtractionSchema) -> list[str]:
-    """Stable header order: metadata, then schema fields (+ review columns)."""
+    """Metadata columns, then user-facing field labels (+ review columns)."""
     headers: list[str] = list(META_COLUMNS)
     seen = set(headers)
     for field in schema.fields:
-        value_col = field.key
-        review_col = f"{field.key}_review"
-        for col in (value_col, review_col):
-            if col in seen:
-                raise ExcelExportError(f"Duplicate Excel column name: {col}")
-            seen.add(col)
-            headers.append(col)
+        if not is_exportable_field_key(field.key):
+            continue
+        value_col = _unique_header(field.label, field.key, seen)
+        review_col = _unique_header(f"{value_col} (review)", f"{field.key}_review", seen)
+        headers.extend([value_col, review_col])
     return headers
 
 

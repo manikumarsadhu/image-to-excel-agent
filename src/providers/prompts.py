@@ -5,12 +5,15 @@ from __future__ import annotations
 import json
 
 from providers.base import StructuringContext
+from utils.schema_dynamic import is_exportable_field_key
 
 
 def build_structuring_prompt(context: StructuringContext) -> tuple[str, str]:
     schema = context.schema
     field_specs = []
     for field in schema.fields:
+        if not is_exportable_field_key(field.key):
+            continue
         spec: dict[str, object] = {
             "key": field.key,
             "label": field.label,
@@ -23,7 +26,15 @@ def build_structuring_prompt(context: StructuringContext) -> tuple[str, str]:
         field_specs.append(spec)
 
     table_hint = ""
-    if schema.name == "pharmacy_tax_invoice":
+    if schema.name == "dynamic":
+        table_hint = (
+            "- Infer columns from the document (invoice, form, receipt, ID, etc.).\n"
+            "- Return one fields[] entry per distinct data column you extract.\n"
+            "- Use snake_case key and a short human label (Excel column title).\n"
+            "- Only include fields clearly supported by OCR text.\n"
+        )
+        field_specs = []
+    elif schema.name == "pharmacy_tax_invoice":
         table_hint = (
             "- This is a pharmacy wholesale tax invoice.\n"
             "- Put every product table row in product_lines: one line per medicine, columns "
@@ -40,7 +51,8 @@ def build_structuring_prompt(context: StructuringContext) -> tuple[str, str]:
         "review_status to \"missing\" or \"uncertain\".\n"
         "- Never invent amounts, dates, names, or IDs.\n"
         "- Return JSON matching the response schema exactly.\n"
-        "- Include one object per schema field key in the fields array.\n"
+        "- Include one object per extracted column in the fields array "
+        "(each with key, label, value, review_status).\n"
         "- review_status must be one of: confirmed, uncertain, missing.\n"
         "- Put only the extracted text in value; never prefix value with review_status.\n"
     )

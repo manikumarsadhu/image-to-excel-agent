@@ -19,6 +19,7 @@ from providers.registry import create_provider
 from services.extraction_service import ExtractionService
 from services.structuring_service import StructuringService
 from utils.pharmacy_lines import parse_product_lines_text
+from utils.schema_dynamic import sync_state_schema
 
 
 @dataclass
@@ -122,8 +123,10 @@ def replace_document(state: DocumentProcessingState, updated: SourceDocument) ->
     for index, doc in enumerate(state.documents):
         if doc.id == updated.id:
             state.documents[index] = updated
+            sync_state_schema(state)
             return
     state.documents.append(updated)
+    sync_state_schema(state)
 
 
 def get_file_bytes(store: dict[str, bytes], document_id: UUID) -> bytes | None:

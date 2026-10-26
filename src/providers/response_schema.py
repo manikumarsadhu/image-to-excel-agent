@@ -22,6 +22,7 @@ def build_structuring_json_schema() -> dict[str, Any]:
                     "type": "object",
                     "properties": {
                         "key": {"type": "string"},
+                        "label": {"type": "string"},
                         "value": {"type": "string"},
                         "review_status": {
                             "type": "string",

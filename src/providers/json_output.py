@@ -41,6 +41,9 @@ def _sanitize_fields(raw_fields: Any) -> list[dict[str, Any]]:
             "value": _coerce_optional_str(item.get("value")),
             "review_status": review,
         }
+        label = _coerce_optional_str(item.get("label"))
+        if label is not None:
+            field["label"] = label
         conf = item.get("confidence")
         if isinstance(conf, (int, float)):
             field["confidence"] = max(0.0, min(1.0, float(conf)))

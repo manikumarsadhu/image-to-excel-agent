@@ -30,6 +30,12 @@ from ui.pipeline import (
     retry_document,
 )
 from ui.schema_presets import SCHEMA_PRESETS, get_preset
+from utils.schema_dynamic import (
+    apply_schema_labels_to_extractions,
+    is_exportable_field_key,
+    sync_state_schema,
+    update_schema_field_labels,
+)
 
 st.set_page_config(
     page_title="Image-to-Excel Agent",
@@ -134,10 +140,18 @@ def _render_sidebar(settings: Settings, schema: ExtractionSchema) -> AIProviderN
         else 0,
     )
     st.session_state.preset_name = preset
-    schema = get_preset(preset)
-    st.session_state.state.extraction_schema = schema
+    previous_preset = st.session_state.get("_active_preset_name")
+    if previous_preset != preset:
+        st.session_state.state.extraction_schema = get_preset(preset)
+        st.session_state._active_preset_name = preset
+    elif st.session_state.state.extraction_schema is None:
+        st.session_state.state.extraction_schema = get_preset(preset)
+    schema = st.session_state.state.extraction_schema
+    sync_state_schema(st.session_state.state)
+    schema = st.session_state.state.extraction_schema or schema
 
-    st.sidebar.caption(f"Active schema: **{schema.name}** ({len(schema.fields)} fields)")
+    field_count = len([f for f in schema.fields if is_exportable_field_key(f.key)])
+    st.sidebar.caption(f"Active schema: **{schema.name}** ({field_count} columns)")
     st.sidebar.caption(
         f"Models: Gemini `{settings.gemini_model}` · Groq `{settings.groq_model}`"
     )
@@ -281,14 +295,28 @@ def _render_document_list(settings: Settings, schema: ExtractionSchema, provider
                 continue
 
             edits: dict[str, str | None] = {}
+            field_map = doc.extraction.field_map()
             for field in schema.fields:
-                current = doc.extraction.field_map().get(field.key)
+                if not is_exportable_field_key(field.key):
+                    continue
+                current = field_map.get(field.key)
+                if current is None and schema.name != "dynamic":
+                    continue
                 default = current.value if current and current.value is not None else ""
                 review = current.review_status.value if current else "missing"
                 label = f"{field.label} ({review})"
                 edits[field.key] = st.text_input(
                     label,
                     value=default,
+                    key=f"edit-{doc.id}-{field.key}",
+                )
+            for field in doc.extraction.fields:
+                if not is_exportable_field_key(field.key) or field.key in edits:
+                    continue
+                review = field.review_status.value
+                edits[field.key] = st.text_input(
+                    f"{field.label} ({review})",
+                    value=field.value or "",
                     key=f"edit-{doc.id}-{field.key}",
                 )
 
@@ -302,8 +330,32 @@ def _render_document_list(settings: Settings, schema: ExtractionSchema, provider
                 st.text(doc.ocr_text or "")
 
 
+def _render_column_heading_editor(schema: ExtractionSchema) -> None:
+    state: DocumentProcessingState = st.session_state.state
+    working = state.extraction_schema or schema
+    export_fields = [f for f in working.fields if is_exportable_field_key(f.key)]
+    with st.expander("Column headings (Excel export titles)", expanded=working.name == "dynamic"):
+        if not export_fields:
+            st.caption("Upload and process a document to detect columns, or pick a preset.")
+            return
+        st.caption("Rename how columns appear in Excel and preview tables. Field keys stay fixed internally.")
+        label_edits: dict[str, str] = {}
+        for field in export_fields:
+            label_edits[field.key] = st.text_input(
+                f"`{field.key}`",
+                value=field.label,
+                key=f"heading-{field.key}",
+            )
+        if st.button("Save column headings", type="secondary"):
+            state.extraction_schema = update_schema_field_labels(working, label_edits)
+            apply_schema_labels_to_extractions(state.extraction_schema, state.documents)
+            st.success("Column headings saved.")
+            st.rerun()
+
+
 def _render_preview_table(schema: ExtractionSchema) -> None:
     state: DocumentProcessingState = st.session_state.state
+    schema = state.extraction_schema or schema
     if schema.name == "pharmacy_tax_invoice":
         line_rows = preview_line_item_rows(state.documents)
         if line_rows:
@@ -326,8 +378,8 @@ def _render_preview_table(schema: ExtractionSchema) -> None:
             "export_review_status",
             "schema_name",
         }
-        or c in {f.key for f in schema.fields}
-        or c.endswith("_review")
+        or c in {f.label for f in schema.fields if is_exportable_field_key(f.key)}
+        or c.endswith("(review)")
     ]
     st.dataframe(df[show_cols], use_container_width=True, hide_index=True)
 
@@ -420,6 +472,8 @@ def main() -> None:
         _render_provider_health(settings, provider_name)
 
     with tab_review:
+        _render_column_heading_editor(schema)
+        st.divider()
         _render_preview_table(schema)
         st.divider()
         _render_document_list(settings, schema, provider_name)

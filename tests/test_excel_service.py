@@ -86,8 +86,8 @@ def test_build_column_headers_unique(schema: ExtractionSchema) -> None:
     headers = build_column_headers(schema)
     assert len(headers) == len(set(headers))
     assert headers[0] == "document_id"
-    assert "vendor" in headers
-    assert "vendor_review" in headers
+    assert "Vendor" in headers
+    assert "Vendor (review)" in headers
 
 
 def test_preview_rows_includes_validated_and_review_required(schema: ExtractionSchema) -> None:
@@ -99,7 +99,7 @@ def test_preview_rows_includes_validated_and_review_required(schema: ExtractionS
     assert len(rows) == 2
     assert rows[0]["export_review_status"] == "validated"
     assert rows[1]["export_review_status"] == "needs_review"
-    assert rows[0]["vendor"] == "Café Müller"
+    assert rows[0]["Vendor"] == "Café Müller"
 
 
 def test_export_new_workbook(tmp_path: Path, settings: Settings, schema: ExtractionSchema) -> None:

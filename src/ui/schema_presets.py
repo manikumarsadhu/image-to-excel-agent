@@ -199,6 +199,18 @@ PRESET_PHARMACY_WHOLESALE_INVOICE = ExtractionSchema(
     ],
 )
 
+PRESET_DYNAMIC = ExtractionSchema(
+    name="dynamic",
+    description="Auto-detect columns from each uploaded document",
+    fields=[
+        ExtractionFieldDefinition(
+            key="auto_placeholder",
+            label="Auto-detected columns",
+            description="Placeholder; AI chooses real columns per document",
+        ),
+    ],
+)
+
 PRESET_GENERAL = ExtractionSchema(
     name="general",
     description="General document",
@@ -222,6 +234,7 @@ PRESET_GENERAL = ExtractionSchema(
 )
 
 SCHEMA_PRESETS: dict[str, ExtractionSchema] = {
+    "Dynamic (auto columns)": PRESET_DYNAMIC,
     "Pharmacy tax invoice (wholesale)": PRESET_PHARMACY_WHOLESALE_INVOICE,
     "Pharmacy receipt": PRESET_PHARMACY_RECEIPT,
     "Receipt": PRESET_RECEIPT,

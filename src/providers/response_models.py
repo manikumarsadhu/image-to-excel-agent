@@ -9,6 +9,7 @@ from models.document import FieldReviewStatus
 
 class ModelFieldOutput(BaseModel):
     key: str = Field(..., min_length=1, max_length=64)
+    label: str | None = Field(default=None, max_length=128)
     value: str | None = None
     review_status: FieldReviewStatus = FieldReviewStatus.CONFIRMED
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
