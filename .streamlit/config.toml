@@ -1,0 +1,12 @@
+# Streamlit Community Cloud / headless server defaults
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+fastReruns = true

@@ -1,0 +1,3 @@
+# System packages for PaddleOCR / OpenCV on Streamlit Community Cloud (Debian)
+libgl1
+libglib2.0-0

@@ -78,6 +78,28 @@ streamlit run src/app.py
 
 Tabs: **Upload & process** (local OCR + cloud structuring), **Review & edit**, **Export** (new/append Excel with overwrite confirmation).
 
+## Deploy free on Streamlit Community Cloud
+
+1. Push this repo to GitHub (`.env` must **not** be committed).
+2. Open [share.streamlit.io](https://share.streamlit.io) → **Create app** → pick repo `manikumarsadhu/image-to-excel-agent`.
+3. **Main file path:** `src/app.py`
+4. **Branch:** `main`
+5. **App settings → Secrets** — paste (with your real keys):
+
+```toml
+GEMINI_API_KEY = "your-gemini-key"
+GROQ_API_KEY = "your-groq-key"
+GEMINI_MODEL = "gemini-3.8-flash"
+GROQ_MODEL = "openai/gpt-oss-120b"
+AI_PROVIDER_ORDER = "gemini,groq"
+```
+
+See [.streamlit/secrets.toml.example](.streamlit/secrets.toml.example). Cloud injects these as environment variables (same names as `.env`).
+
+6. **Deploy.** First OCR run downloads Paddle models (can take several minutes). Free tier RAM is limited — if the app crashes on upload, use an [Oracle Always Free VM](https://www.oracle.com/cloud/free/) instead.
+
+**Repo files used by Cloud:** `requirements.txt` (includes `-e .` and `paddlepaddle==2.6.2`), `.python-version` (`3.11`), `packages.txt` (system libs for OCR).
+
 ## Layout (Stage 5)
 
 ```
