@@ -105,6 +105,8 @@ See [.streamlit/secrets.toml.example](.streamlit/secrets.toml.example). Cloud in
 
 If install still fails with `cp314` or `No matching distribution found for paddlepaddle`, the app is on Python 3.14 — **delete the app**, redeploy, and set **Python 3.12** in Advanced settings.
 
+If the app builds but the browser shows **500** / logs show `Expected ASGI message 'http.response.start'`, reboot after pulling the latest `requirements.txt` (pins `streamlit>=1.61.1` and `starlette<1.4.0`).
+
 ## Layout (Stage 5)
 
 ```
