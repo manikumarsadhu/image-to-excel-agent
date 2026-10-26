@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from config import AIProviderName, Settings
+from config import AIProviderName, Settings, apply_streamlit_secrets_to_environ
 from models.document import (
     DocumentProcessingState,
     ExtractionSchema,
@@ -57,6 +57,7 @@ def _init_session() -> None:
 
 def _app_settings() -> Settings:
     """Fresh settings each Streamlit rerun (.env edits need server restart)."""
+    apply_streamlit_secrets_to_environ()
     return Settings()
 
 
@@ -98,7 +99,10 @@ def _guess_mime(filename: str) -> str | None:
 def _provider_label(settings: Settings) -> str:
     configured = settings.configured_cloud_providers()
     if not configured:
-        return "None configured (add API keys to `.env`)"
+        return (
+            "None configured — add GEMINI_API_KEY and/or GROQ_API_KEY in `.env` (local) "
+            "or Streamlit **Settings → Secrets** (Cloud), then reboot the app."
+        )
     return ", ".join(configured)
 
 

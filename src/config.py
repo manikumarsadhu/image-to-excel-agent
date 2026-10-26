@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import os
+from collections.abc import Mapping
 from enum import Enum
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -104,6 +106,56 @@ class Settings(BaseSettings):
         return names
 
 
+def _flatten_secret_values(
+    node: Any,
+    *,
+    prefix: str = "",
+    out: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Turn nested Streamlit secrets into ENV-style keys (GEMINI_API_KEY)."""
+    if out is None:
+        out = {}
+    if isinstance(node, Mapping):
+        for key, value in node.items():
+            segment = str(key).strip()
+            if not segment or segment.startswith("_"):
+                continue
+            path = f"{prefix}_{segment}" if prefix else segment
+            _flatten_secret_values(value, prefix=path, out=out)
+        return out
+    if node is None:
+        return out
+    if isinstance(node, (str, int, float, bool)):
+        env_key = prefix.upper()
+        if env_key and env_key not in out:
+            text = str(node).strip()
+            if text:
+                out[env_key] = text
+    return out
+
+
+def apply_streamlit_secrets_to_environ() -> None:
+    """
+    Load Streamlit Community Cloud secrets into os.environ for pydantic-settings.
+
+    Local dev can use `.env`; Cloud uses app Settings → Secrets (no .env file).
+    """
+    try:
+        import streamlit as st
+    except ImportError:
+        return
+
+    try:
+        raw = dict(st.secrets)
+    except (FileNotFoundError, RuntimeError):
+        return
+
+    for env_key, value in _flatten_secret_values(raw).items():
+        if env_key not in os.environ or not os.environ.get(env_key, "").strip():
+            os.environ[env_key] = value
+
+
 @lru_cache
 def get_settings() -> Settings:
+    apply_streamlit_secrets_to_environ()
     return Settings()
