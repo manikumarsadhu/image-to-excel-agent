@@ -52,9 +52,9 @@ PaddleOCR needs **paddlepaddle**, which currently ships wheels for **Python 3.11
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-pip install paddlepaddle==2.6.2
-pip install protobuf==3.20.2
+pip install -r requirements.txt
 pip install -e .
+# If Paddle fails on Windows only: pip install protobuf==3.20.2 --force-reinstall
 pytest
 ```
 
