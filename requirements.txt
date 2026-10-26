@@ -1,0 +1,29 @@
+# Stage 1: core config and models
+pydantic>=2.6,<3
+pydantic-settings>=2.2,<3
+python-dotenv>=1.0,<2
+
+# Stage 2: local OCR (Python 3.11–3.12 on Windows — see README)
+pillow>=10,<12
+paddleocr>=2.7,<3
+# Install AFTER requirements on Windows (PaddleOCR 2.x needs Paddle 2.6, not 3.x):
+# pip install paddlepaddle==2.6.2
+# pip install protobuf==3.20.2
+
+# Stage 3–4: cloud structuring (text only; no image upload to API)
+google-genai>=1.0,<2
+groq>=0.9,<1
+
+# Stage 5: Excel export
+openpyxl>=3.1,<4
+
+# Stage 6: Streamlit UI
+streamlit>=1.32,<2
+
+# Stages 7+
+# paddlepaddle>=2.6,<3
+# httpx>=0.27,<1
+# groq>=0.9,<1
+
+# Development
+pytest>=8.0,<9
