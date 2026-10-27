@@ -35,6 +35,20 @@ def test_parse_pipe_separated_product_lines() -> None:
     assert items[0].qty == "60"
 
 
+def test_parse_stringified_list_product_lines() -> None:
+    text = (
+        "['DRR|KETORAL DT TAB STRP||06/2029|E2601499|60||182.78|139.26|8355.60|5.00|177.25', "
+        "'DRR|VANTEJ PASTE 100gr||04/2028|BBV26059|18||387.00|294.86|5307.48|5.00|403']"
+    )
+    items = parse_product_lines_text(text)
+    assert len(items) == 2
+    assert items[0].mfg == "DRR"
+    assert items[0].product_name == "KETORAL DT TAB STRP"
+    assert items[0].qty == "60"
+    assert items[1].product_name == "VANTEJ PASTE 100gr"
+    assert items[1].qty == "18"
+
+
 def test_map_model_line_items() -> None:
     schema = ExtractionSchema(
         name="pharmacy_tax_invoice",

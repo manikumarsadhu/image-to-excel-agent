@@ -28,9 +28,12 @@ class PipelineOutcome:
     message: str | None = None
 
 
-def create_ocr_engine_or_none(settings: Settings) -> tuple[OcrEngine | None, str | None]:
+def create_ocr_engine_or_none(
+    settings: Settings,
+    engine_name: str | None = None,
+) -> tuple[OcrEngine | None, str | None]:
     try:
-        return get_default_ocr_engine(settings), None
+        return get_default_ocr_engine(settings, engine_name=engine_name), None
     except OcrEngineError as exc:
         return None, str(exc)
 

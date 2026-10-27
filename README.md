@@ -1,6 +1,6 @@
 # Image-to-Excel AI Agent
 
-Extract text from document images with local OCR, structure fields with configurable AI providers, review results in a Streamlit UI, and export to Excel.
+Extract text from document images using local OCR (PaddleOCR) or cloud AI Vision (Google Gemini), structure fields with configurable AI providers, review results in a Streamlit UI, and export to Excel.
 
 **Current status:** Stage 6 — Streamlit UI (upload, review, export).
 
@@ -72,11 +72,12 @@ cd E:\mani-projects\image-to-excel-agent
 pip install -r requirements.txt
 pip install -e .
 copy .env.example .env
-# Set GEMINI_API_KEY and/or GROQ_API_KEY; install paddlepaddle for local OCR (Python 3.11–3.12)
+# Set GEMINI_API_KEY and/or GROQ_API_KEY
+# Local OCR uses PaddleOCR (Python 3.11–3.12). Cloud OCR uses Gemini Vision directly.
 streamlit run src/app.py
 ```
 
-Tabs: **Upload & process** (local OCR + cloud structuring), **Review & edit**, **Export** (new/append Excel with overwrite confirmation).
+Tabs: **Upload & process** (OCR Engine: Auto / Gemini Vision / PaddleOCR), **Review & edit**, **Export** (new/append Excel with overwrite confirmation).
 
 ## Deploy free on Streamlit Community Cloud
 

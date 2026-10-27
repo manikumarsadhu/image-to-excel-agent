@@ -36,10 +36,11 @@ def build_structuring_prompt(context: StructuringContext) -> tuple[str, str]:
         field_specs = []
     elif schema.name == "pharmacy_tax_invoice":
         table_hint = (
-            "- This is a pharmacy wholesale tax invoice.\n"
-            "- Put every product table row in product_lines: one line per medicine, columns "
+            "- This is a pharmacy wholesale tax invoice with multiple medicine product rows.\n"
+            "- Put every single product table row in product_lines: one line per medicine, columns "
             "separated by | (mfg | product_name | pack | exp | batch | qty | free | mrp | "
             "rate | amount | gst_pct | hsn).\n"
+            "- Separate each medicine with a newline (\\n). Do NOT omit any medicine rows.\n"
         )
 
     system = (

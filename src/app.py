@@ -59,6 +59,8 @@ def _init_session() -> None:
         st.session_state.preset_name = "Pharmacy tax invoice (wholesale)"
     if "provider_choice" not in st.session_state:
         st.session_state.provider_choice = AIProviderName.AUTO.value
+    if "ocr_choice" not in st.session_state:
+        st.session_state.ocr_choice = "auto"
 
 
 def _app_settings() -> Settings:
@@ -67,17 +69,22 @@ def _app_settings() -> Settings:
     return Settings()
 
 
-def _session_ocr_engine(settings: Settings):
-    """Load PaddleOCR once per session (reload models is slow)."""
-    cache_key = f"{settings.ocr_lang}:{settings.paddle_use_gpu}"
+def _session_ocr_engine(settings: Settings, ocr_choice: str = "auto"):
+    """Load OCR engine once per session (reload models is slow)."""
+    cache_key = f"{ocr_choice}:{settings.ocr_lang}:{settings.paddle_use_gpu}:{settings.gemini_model}"
     if st.session_state.get("_ocr_cache_key") != cache_key:
         st.session_state.pop("ocr_engine", None)
         st.session_state.pop("ocr_engine_error", None)
         st.session_state._ocr_cache_key = cache_key
 
     if "ocr_engine" not in st.session_state:
-        with st.spinner("Loading PaddleOCR models (first run often takes 1–2 minutes)…"):
-            engine, err = create_ocr_engine_or_none(settings)
+        spinner_msg = (
+            "Connecting to Gemini Vision OCR…"
+            if ocr_choice == "gemini_vision"
+            else "Loading OCR engine (first Paddle run may take 1–2 minutes)…"
+        )
+        with st.spinner(spinner_msg):
+            engine, err = create_ocr_engine_or_none(settings, engine_name=ocr_choice)
         if engine is None:
             st.session_state.ocr_engine_error = err
         else:
@@ -126,10 +133,30 @@ def _render_sidebar(settings: Settings, schema: ExtractionSchema) -> AIProviderN
         if st.session_state.provider_choice
         in {AIProviderName.AUTO.value, AIProviderName.GEMINI.value, AIProviderName.GROQ.value}
         else 0,
-        help="AUTO uses failover order from AI_PROVIDER_ORDER. OCR always runs locally.",
+        help="AUTO uses failover order from AI_PROVIDER_ORDER for schema structuring.",
     )
     st.session_state.provider_choice = choice
     provider_name = AIProviderName(choice)
+
+    ocr_options = {
+        "auto": "Auto (PaddleOCR if installed, else Gemini Vision)",
+        "gemini_vision": "Gemini Vision (Cloud AI)",
+        "paddleocr": "PaddleOCR (Local)",
+    }
+    ocr_choice = st.sidebar.selectbox(
+        "OCR Engine",
+        options=list(ocr_options.keys()),
+        format_func=lambda k: ocr_options[k],
+        index=list(ocr_options.keys()).index(st.session_state.ocr_choice)
+        if st.session_state.ocr_choice in ocr_options
+        else 0,
+        help="PaddleOCR runs locally. Gemini Vision sends image bytes directly to Google Gemini for transcription.",
+    )
+    if ocr_choice != st.session_state.ocr_choice:
+        st.session_state.ocr_choice = ocr_choice
+        st.session_state.pop("ocr_engine", None)
+        st.session_state.pop("ocr_engine_error", None)
+        st.session_state.pop("_ocr_cache_key", None)
 
     st.sidebar.markdown("---")
     preset = st.sidebar.selectbox(
@@ -189,7 +216,8 @@ def _process_uploads(
     provider_name: AIProviderName,
     uploads: list,
 ) -> None:
-    ocr_engine, ocr_error = _session_ocr_engine(settings)
+    ocr_choice = st.session_state.get("ocr_choice", "auto")
+    ocr_engine, ocr_error = _session_ocr_engine(settings, ocr_choice)
     if ocr_engine is None:
         st.error(f"OCR unavailable: {ocr_error}")
         return
@@ -224,7 +252,8 @@ def _process_uploads(
             progress.progress((index + 1) / total, text=f"Done {upload.name}")
             continue
 
-        progress.progress(base + 0.35 / total, text=f"{upload.name}: local OCR…")
+        ocr_label = "Gemini Vision OCR" if "gemini" in ocr_engine.name.lower() else "local OCR (PaddleOCR)"
+        progress.progress(base + 0.35 / total, text=f"{upload.name}: {ocr_label}…")
         document = extraction.run_ocr(document, content)
 
         if document.status != ProcessingStatus.OCR_FAILED:
@@ -271,7 +300,8 @@ def _render_document_list(settings: Settings, schema: ExtractionSchema, provider
                     if not content:
                         st.warning("Original file bytes not in session; re-upload to retry.")
                     else:
-                        ocr_engine, err = _session_ocr_engine(settings)
+                        ocr_choice = st.session_state.get("ocr_choice", "auto")
+                        ocr_engine, err = _session_ocr_engine(settings, ocr_choice)
                         if ocr_engine is None:
                             st.error(err)
                         else:
@@ -451,8 +481,8 @@ def main() -> None:
     settings = _app_settings()
     st.title("Image-to-Excel Agent")
     st.markdown(
-        "Upload document images · **OCR runs locally** · "
-        "Cloud AI receives **OCR text only** · Review · Export to Excel"
+        "Upload document images · **Local OCR or Cloud AI Vision** · "
+        "Review · Export to Excel"
     )
 
     provider_name = _render_sidebar(settings, st.session_state.state.extraction_schema or get_preset("Receipt"))

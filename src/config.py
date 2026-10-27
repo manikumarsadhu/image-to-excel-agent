@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3.2"
 
     default_ai_provider: AIProviderName = AIProviderName.AUTO
-    gemini_model: str = "gemini-3.8-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     groq_model: str = "openai/gpt-oss-120b"
 
     ai_provider_order: str = "gemini,groq"
@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     excel_default_sheet: str = "ExtractedData"
     excel_line_items_sheet: str = "LineItems"
 
+    ocr_engine: str = "auto"
     ocr_lang: str = "en"
     paddle_use_gpu: bool = False
 
