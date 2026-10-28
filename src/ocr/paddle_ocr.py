@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
 
 from ocr.base import OcrEngine, OcrEngineError, OcrLine, OcrResult
+
+# Prevent protobuf descriptor crashes when paddle runs with protobuf >= 4 on Linux
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 
 _WINDOWS_PADDLE_HINT = (
     "On Windows, use paddlepaddle==2.6.2 with paddleocr 2.x "
@@ -28,7 +32,7 @@ def is_paddle_ocr_available() -> bool:
     try:
         import paddle  # noqa: F401
         from paddleocr import PaddleOCR  # noqa: F401
-    except ImportError:
+    except (ImportError, Exception):
         return False
     return True
 

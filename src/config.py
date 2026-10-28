@@ -148,7 +148,7 @@ def apply_streamlit_secrets_to_environ() -> None:
 
     try:
         raw = dict(st.secrets)
-    except (FileNotFoundError, RuntimeError):
+    except Exception:
         return
 
     for env_key, value in _flatten_secret_values(raw).items():

@@ -85,7 +85,7 @@ Tabs: **Upload & process** (OCR Engine: Auto / Gemini Vision / PaddleOCR), **Rev
 
 1. Push this repo to GitHub (`.env` must **not** be committed).
 2. Open [share.streamlit.io](https://share.streamlit.io) → **Create app** (or delete the app and redeploy to change Python later).
-3. **Main file path:** `src/app.py`
+3. **Main file path:** `streamlit_app.py` (or `app.py` / `src/app.py`)
 4. **Branch:** `main`
 5. Click **Advanced settings** → **Python version** → **3.12** (or 3.11) → **Save**.
 6. **Secrets** (same Advanced settings or app Settings) — paste (with your real keys):
@@ -102,7 +102,7 @@ See [.streamlit/secrets.toml.example](.streamlit/secrets.toml.example). Cloud in
 
 6. **Deploy.** First OCR run downloads Paddle models (can take several minutes). Free tier RAM is limited — if the app crashes on upload, use an [Oracle Always Free VM](https://www.oracle.com/cloud/free/) instead.
 
-**Repo files used by Cloud:** `requirements.txt` (includes `-e .` and `paddlepaddle==2.6.2`), `environment.yml` (conda Python 3.12 if Cloud uses it), `packages.txt` (system libs for OCR, no `#` comments).
+**Repo files used by Cloud:** `requirements.txt` (includes `-e .` and `paddlepaddle==2.6.2`), `packages.txt` (system libs for OCR: `libgl1`, `libglib2.0-0`, `libgomp1`), `.python-version`.
 
 If install still fails with `cp314` or `No matching distribution found for paddlepaddle`, the app is on Python 3.14 — **delete the app**, redeploy, and set **Python 3.12** in Advanced settings.
 
