@@ -1,15 +1,12 @@
-# Install package (src layout) — required on Streamlit Community Cloud
--e .
-
 # Stage 1: core config and models
 pydantic>=2.6,<3
 pydantic-settings>=2.2,<3
 python-dotenv>=1.0,<2
 
-# Stage 2: local OCR (Python 3.11; see README for Windows paddle install order)
+# Stage 2: local OCR (Python 3.11–3.12; Gemini Vision fallback on Python 3.13+)
 pillow>=10,<12
-paddleocr>=2.7,<3
-paddlepaddle==2.6.2
+paddleocr>=2.7,<3; python_version < "3.13"
+paddlepaddle==2.6.2; python_version < "3.13"
 # Streamlit 1.61+ needs protobuf 5.x on Linux (Cloud). Windows Paddle often needs 3.20.2.
 protobuf>=5.26.1,<8; platform_system != "Windows"
 protobuf==3.20.2; platform_system == "Windows"
